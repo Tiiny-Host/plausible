@@ -3,28 +3,21 @@ defmodule Plausible.Sites do
   alias Plausible.Site.{CustomDomain, SharedLink}
 
   def create(user, params) do
-    count = Enum.count(owned_by(user))
-    limit = Plausible.Billing.sites_limit(user)
+    site_changeset = Plausible.Site.changeset(%Plausible.Site{}, params)
 
-    if count >= limit do
-      {:error, :limit, limit}
-    else
-      site_changeset = Plausible.Site.changeset(%Plausible.Site{}, params)
+    Ecto.Multi.new()
+    |> Ecto.Multi.insert(:site, site_changeset)
+    |> Ecto.Multi.run(:site_membership, fn repo, %{site: site} ->
+      membership_changeset =
+        Plausible.Site.Membership.changeset(%Plausible.Site.Membership{}, %{
+          site_id: site.id,
+          user_id: user.id
+        })
 
-      Ecto.Multi.new()
-      |> Ecto.Multi.insert(:site, site_changeset)
-      |> Ecto.Multi.run(:site_membership, fn repo, %{site: site} ->
-        membership_changeset =
-          Plausible.Site.Membership.changeset(%Plausible.Site.Membership{}, %{
-            site_id: site.id,
-            user_id: user.id
-          })
-
-        repo.insert(membership_changeset)
-      end)
-      |> maybe_start_trial(user)
-      |> Repo.transaction()
-    end
+      repo.insert(membership_changeset)
+    end)
+    |> maybe_start_trial(user)
+    |> Repo.transaction()
   end
 
   defp maybe_start_trial(multi, user) do
