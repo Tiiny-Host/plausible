@@ -2,7 +2,7 @@
 # platform specific, it makes sense to build it in the docker
 
 #### Builder
-FROM hexpm/elixir:1.12.2-erlang-24.0-alpine-3.13.3 as buildcontainer
+FROM hexpm/elixir:1.12.2-erlang-24.0-alpine-3.13.3 AS buildcontainer
 
 # preparation
 ARG APP_VER=0.0.1
@@ -15,7 +15,7 @@ WORKDIR /app
 
 # install build dependencies
 RUN apk add --no-cache git nodejs yarn python3 npm ca-certificates wget gnupg make erlang gcc libc-dev && \
-    npm install npm@latest -g && \
+    npm install npm@8.15.1 -g && \
     npm install -g webpack
 
 COPY mix.exs ./
