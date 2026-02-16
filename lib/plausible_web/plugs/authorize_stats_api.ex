@@ -70,11 +70,5 @@ defmodule PlausibleWeb.AuthorizeStatsApiPlug do
     if found_key, do: {:ok, found_key}, else: {:error, :invalid_api_key}
   end
 
-  @one_hour 60 * 60 * 1000
-  defp check_api_key_rate_limit(api_key) do
-    case Hammer.check_rate("api_request:#{api_key.id}", @one_hour, api_key.hourly_request_limit) do
-      {:allow, _} -> :ok
-      {:deny, _} -> {:error, :rate_limit, api_key.hourly_request_limit}
-    end
-  end
+  defp check_api_key_rate_limit(_api_key), do: :ok
 end
